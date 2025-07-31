@@ -1,3 +1,7 @@
+
+
+
+
 package com.example.dogs_theming
 
 import android.view.LayoutInflater
@@ -30,18 +34,19 @@ class PetAdapter (private val petList: List<String>) : RecyclerView.Adapter<PetA
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val petImageURL = petList[position]
+        val petData = petList[position]  // format: "name|imageUrl"
+        val splitData = petData.split("|")
+        val petBreed = splitData[0]      // Pokémon name
+        val petImageURL = splitData[1]   // Pokémon image url
 
         Glide.with(holder.itemView)
             .load(petImageURL)
             .centerCrop()
             .into(holder.petImage)
 
-        val petImageURLSplit = petImageURL.split("/")
-        val petBreed = petImageURLSplit[4].replace('-', ' ')
-
         holder.petBreed.text = petBreed
     }
+
 
     override fun getItemCount() = petList.size
 }

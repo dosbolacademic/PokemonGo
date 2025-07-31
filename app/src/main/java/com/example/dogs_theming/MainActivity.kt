@@ -35,38 +35,63 @@ class MainActivity : AppCompatActivity() {
         fetchDogImages()
     }
 
-    private fun fetchDogImages() {
+    private fun fetchDogImages() {  // keep method name same for now
         val client = AsyncHttpClient()
 
-        client["https://dog.ceo/api/breeds/image/random/20", object : JsonHttpResponseHandler() {
-            override fun onSuccess(statusCode: Int, headers: Headers, json: JsonHttpResponseHandler.JSON) {
-                Log.d("Dog", "response successful: $json")
+        val pokemonListUrl = "https://pokeapi.co/api/v2/pokemon?limit=20"
 
-//                val petImageURL = json.jsonObject.getString("message") // pet image URL set: https://images.dog.ceo/breeds/terrier-american/n02093428_4654.jpg
-//                val petImageURLSplit = petImageURL.split("/");
-//                val petBreed = petImageURLSplit[4]
-
-                val petImageArray = json.jsonObject.getJSONArray("message")
-                for (i in 0 until petImageArray.length()) {
-                    petList.add(petImageArray.getString(i))
+        client[pokemonListUrl, object : JsonHttpResponseHandler() {
+            override fun onSuccess(
+                statusCode: Int,
+                headers: Headers,
+                json: JsonHttpResponseHandler.JSON
+            ) {
+                val results = json.jsonObject.getJSONArray("results")
+                // Temporary list to hold the URLs for detailed calls
+                val detailUrls = mutableListOf<String>()
+                for (i in 0 until results.length()) {
+                    val obj = results.getJSONObject(i)
+                    detailUrls.add(obj.getString("url"))
                 }
 
-//                Log.d("petImageURL", "pet image URL set: $petImageURL")
-//                Log.d("petImageURLSplit", "pet image URL split into: $petImageURLSplit")
-//                Log.d("petBreed", "pet breed set: $petBreed")
+                // Now fetch each pokemon detail to get image and name
+                for (url in detailUrls) {
+                    client[url, object : JsonHttpResponseHandler() {
+                        override fun onSuccess(
+                            statusCode: Int,
+                            headers: Headers,
+                            jsonDetail: JsonHttpResponseHandler.JSON
+                        ) {
+                            val name = jsonDetail.jsonObject.getString("name")
+                            val sprites = jsonDetail.jsonObject.getJSONObject("sprites")
+                            val imageUrl =
+                                sprites.getString("front_default") // Pokémon sprite image
 
+                            if (imageUrl != "null") {
+                                petList.add("$name|$imageUrl")
+
+                                // Notify adapter for each addition (optional: batch after all loaded)
+                                runOnUiThread {
+                                    rvPets.adapter?.notifyDataSetChanged()
+                                }
+                            }
+                        }
+
+                        override fun onFailure(
+                            statusCode: Int,
+                            headers: Headers?,
+                            errorResponse: String,
+                            throwable: Throwable?
+                        ) {
+                            Log.d("Pokemon Detail Error", errorResponse)
+                        }
+                    }]
+                }
+
+                // Set adapter and layout manager once (it will update as items added)
                 val adapter = PetAdapter(petList)
                 rvPets.adapter = adapter
                 rvPets.layoutManager = LinearLayoutManager(this@MainActivity)
-
-//                val imageView = findViewById<ImageView>(R.id.pet_image)
-//                Glide.with(this@MainActivity)
-//                    .load(petImageURL)
-//                    .fitCenter()
-//                    .into(imageView)
-//
-//                val textView = findViewById<TextView>(R.id.pet_breed)
-//                textView.text = petBreed
             }
 
             override fun onFailure(
@@ -75,8 +100,10 @@ class MainActivity : AppCompatActivity() {
                 errorResponse: String,
                 throwable: Throwable?
             ) {
-                Log.d("Dog Error", errorResponse)
+                Log.d("Pokemon List Error", errorResponse)
             }
         }]
     }
 }
+
+
