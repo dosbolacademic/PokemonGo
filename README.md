@@ -29,6 +29,9 @@ The following EXTRA features are implemented:
 
 - [X] _None at this time_
 
+## GIF
+![AND102-Project-3](https://github.com/user-attachments/assets/348ad5a9-37fb-43a0-81f0-0f005d113d2a)
+
 ## Notes
 
 I learned how to use RecyclerView, how to parse JSON arrays from a public API, how to apply custom theming using styles, and how to load images with Glide.
